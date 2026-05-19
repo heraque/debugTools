@@ -1,0 +1,5 @@
+# Evita enviar lixo de git e artefatos locais para o contexto de build.
+.git
+.github
+.DS_Store
+*.log

@@ -1,0 +1,81 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o repositorio para montar a imagem a partir do Dockerfile versionado.
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Habilita emulacao para publicar amd64 e arm64 a partir do runner padrao.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Prepara o builder Buildx com suporte a multiplataforma e cache.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Faz login no GHCR usando o token nativo do workflow, como recomendado pela documentacao do GitHub.
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Gera tags e labels OCI automaticamente para branch main, semver e SHA curto.
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/debugtools
+          tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,format=short
+
+      # Monta a imagem, roda o build multiplataforma e publica no GHCR fora de pull request.
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          pull: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Publica atestacao de proveniencia apenas quando a imagem realmente foi enviada ao GHCR.
+      - name: Attest build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/debugtools
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
