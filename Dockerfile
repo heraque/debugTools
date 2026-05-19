@@ -23,6 +23,7 @@ RUN apk add --no-cache \
     netcat-openbsd \
     openssl \
     procps \
+    python3 \
     sed \
     socat \
     util-linux \

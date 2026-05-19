@@ -39,6 +39,7 @@ Ferramental incluído:
 - `netcat-openbsd` (`nc`)
 - `openssl`
 - `procps`
+- `python3`
 - `sed`
 - `socat`
 - `util-linux`
