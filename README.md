@@ -75,20 +75,12 @@ Se algum binário extra virar necessidade recorrente e justificada por evidênci
 
 ## Como usar
 
-### 1. Publicar no GHCR
+### 1. Clonar o repositório
 
-O workflow em `.github/workflows/publish.yml` publica a imagem em:
-
-```text
-ghcr.io/heraque/debugtools
+```bash
+git clone git@github.com:heraque/debugTools.git
+cd debugTools
 ```
-
-Fluxo esperado:
-
-1. subir mudanças na branch `main`;
-2. deixar o GitHub Actions buildar e publicar;
-3. preferir tags versionadas para produção, por exemplo `v0.1.0`;
-4. evitar depender de `:main` por muito tempo em ambientes estáveis.
 
 ### 2. Build local
 
@@ -150,14 +142,6 @@ Trade-off aceito:
 
 - a imagem não é a menor possível em bytes absolutos;
 - ela é pequena o bastante para uso operacional e grande o bastante para evitar fallback tosco durante incidentes reais.
-
-## Versionamento recomendado
-
-Para uso operacional estável:
-
-- publique com tag semântica, por exemplo `v0.1.0`
-- fixe o chart/consumer nesse tag
-- use `:main` apenas como trilha de desenvolvimento
 
 ## Quando evoluir esta imagem
 
