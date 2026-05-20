@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debugtools-mcp-server
+  namespace: default
+  labels:
+    app: debugtools-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debugtools-mcp-server
+  template:
+    metadata:
+      labels:
+        app: debugtools-mcp-server
+    spec:
+      containers:
+      - name: mcp-diagnostics
+        image: ghcr.io/heraque/debugtools-mcp:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http-sse
+        env:
+        - name: PORT
+          value: "3000"
+        - name: MCP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: debugtools-mcp-secret
+              key: api-key
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+        securityContext:
+          # High security non-root settings
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_RAW # Required for ICMP socket bindings in containerized environments (ping/DF checks)
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false # Required since node needs to write temporary config files/sockets

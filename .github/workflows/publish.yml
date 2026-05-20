@@ -40,9 +40,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Gera tags OCI a partir da release publicada.
-      - name: Extract Docker metadata
-        id: meta
+      # Gera tags OCI a partir da release publicada para debugtools.
+      - name: Extract Docker metadata for debugtools
+        id: meta-debugtools
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/debugtools
@@ -50,9 +50,9 @@ jobs:
             type=raw,value=${{ github.event.release.tag_name }}
             type=raw,value=latest,enable=${{ github.event.release.prerelease == false }}
 
-      # Monta a imagem, roda o build multiplataforma e publica no GHCR quando a release for publicada.
-      - name: Build and push
-        id: build
+      # Monta a imagem, roda o build multiplataforma e publica no GHCR para debugtools.
+      - name: Build and push debugtools
+        id: build-debugtools
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -60,15 +60,48 @@ jobs:
           platforms: linux/amd64,linux/arm64
           pull: true
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-debugtools.outputs.tags }}
+          labels: ${{ steps.meta-debugtools.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Publica atestacao de proveniencia da imagem publicada no GHCR.
-      - name: Attest build provenance
+      # Publica atestacao de proveniencia da imagem debugtools publicada no GHCR.
+      - name: Attest build provenance for debugtools
         uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ github.repository_owner }}/debugtools
-          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-digest: ${{ steps.build-debugtools.outputs.digest }}
+          push-to-registry: true
+
+      # Gera tags OCI a partir da release publicada para debugtools-mcp.
+      - name: Extract Docker metadata for debugtools-mcp
+        id: meta-mcp
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/debugtools-mcp
+          tags: |
+            type=raw,value=${{ github.event.release.tag_name }}
+            type=raw,value=latest,enable=${{ github.event.release.prerelease == false }}
+
+      # Monta a imagem, roda o build multiplataforma e publica no GHCR para o mcp-server.
+      - name: Build and push debugtools-mcp
+        id: build-mcp
+        uses: docker/build-push-action@v7
+        with:
+          context: ./mcp-server
+          file: ./mcp-server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          pull: true
+          push: true
+          tags: ${{ steps.meta-mcp.outputs.tags }}
+          labels: ${{ steps.meta-mcp.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Publica atestacao de proveniencia da imagem debugtools-mcp publicada no GHCR.
+      - name: Attest build provenance for debugtools-mcp
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/debugtools-mcp
+          subject-digest: ${{ steps.build-mcp.outputs.digest }}
           push-to-registry: true
