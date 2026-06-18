@@ -45,6 +45,7 @@ Ferramental incluído:
 - `iproute2` (`ip`, `ss`)
 - `iputils`
 - `jq`
+- `mtr`
 - `netcat-openbsd` (`nc`)
 - `openssl`
 - `procps`
@@ -112,9 +113,42 @@ Exemplo ilustrativo:
 kubectl debug pod/app-123 \
   -n app-ns \
   --target=app \
-  --image=ghcr.io/heraque/debugtools:v0.1.0 \
+  --image=ghcr.io/heraque/debugtools:latest \
   --container=debugger \
   -- bash
+```
+
+### 5. Uso como Pod interno temporário
+
+Para subir a imagem como um Pod de diagnóstico dentro do cluster, use o manifest declarativo:
+
+```bash
+kubectl apply -f k8s/debugtools-pod.yaml
+```
+
+Depois acesse o shell do container:
+
+```bash
+kubectl exec -it pod/debugtools -- bash
+```
+
+O manifest sobrescreve o comando da imagem com `sleep infinity`. Isso é necessário porque o `CMD ["/bin/bash"]` da imagem é adequado para uso interativo, mas um Pod criado sem TTY pode encerrar imediatamente.
+
+### Arquitetura da imagem
+
+As imagens publicadas devem conter manifests para `linux/amd64` e `linux/arm64`. Antes de usar no Kubernetes, valide a tag:
+
+```bash
+docker buildx imagetools inspect ghcr.io/heraque/debugtools:latest
+```
+
+Para publicar a imagem de debug com suporte a nós AMD64 e ARM64:
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t ghcr.io/heraque/debugtools:latest \
+  --push .
 ```
 
 ## Uso em automações e wrappers
@@ -195,6 +229,12 @@ docker run -d --name mcp-probe \
   -p 3000:3000 \
   -e MCP_API_KEY="seu_token_secreto" \
   ghcr.io/heraque/debugtools-mcp:v1.0.2
+```
+
+Para validar que a tag do MCP Server atende nós AMD64 e ARM64:
+
+```bash
+docker buildx imagetools inspect ghcr.io/heraque/debugtools-mcp:v1.0.2
 ```
 
 **Opção 2: Node.js Local**

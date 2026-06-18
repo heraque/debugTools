@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debugtools
+  namespace: thf-mingle
+  labels:
+    app: debugtools
+  annotations:
+    debugtools.heraque.dev/purpose: "temporary internal Kubernetes diagnostics"
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 5
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+  containers:
+  - name: debugtools
+    image: ghcr.io/heraque/debugtools:latest
+    imagePullPolicy: Always
+    command:
+    - /bin/sh
+    - -lc
+    - sleep infinity
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        add:
+        - NET_RAW
+        drop:
+        - ALL
+      readOnlyRootFilesystem: false
+    livenessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -lc
+        - test -r /etc/os-release
+      initialDelaySeconds: 5
+      periodSeconds: 30
+      timeoutSeconds: 2
+      failureThreshold: 3
+    readinessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -lc
+        - test -x /bin/sh
+      initialDelaySeconds: 2
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3

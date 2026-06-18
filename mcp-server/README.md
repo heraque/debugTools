@@ -86,7 +86,23 @@ O Dockerfile utiliza build multi-estágio para manter a imagem leve e segura, e 
 
 ### Build da Imagem
 ```bash
-docker build -t ghcr.io/heraque/debugtools-mcp:v1.0.0 .
+docker build -t ghcr.io/heraque/debugtools-mcp:v1.0.2 .
+```
+
+Para publicar a imagem com suporte a nós Kubernetes `amd64` e `arm64`, use `buildx`:
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t ghcr.io/heraque/debugtools-mcp:v1.0.2 \
+  -t ghcr.io/heraque/debugtools-mcp:latest \
+  --push .
+```
+
+Valide o manifest publicado antes de aplicar no Kubernetes:
+
+```bash
+docker buildx imagetools inspect ghcr.io/heraque/debugtools-mcp:v1.0.2
 ```
 
 ### Executar Localmente via Container
@@ -95,7 +111,7 @@ docker run -d \
   -p 3000:3000 \
   -e MCP_API_KEY="sua-chave-secreta" \
   --cap-add=NET_RAW \
-  ghcr.io/heraque/debugtools-mcp:v1.0.0
+  ghcr.io/heraque/debugtools-mcp:v1.0.2
 ```
 
 > [!NOTE]

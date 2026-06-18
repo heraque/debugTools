@@ -20,6 +20,7 @@ RUN apk add --no-cache \
     iproute2 \
     iputils \
     jq \
+    mtr \
     netcat-openbsd \
     openssl \
     procps \
