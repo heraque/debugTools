@@ -1,5 +1,7 @@
 # debugTools & MCP Diagnostics Server
 
+[![Publish images](https://github.com/heraque/debugTools/actions/workflows/publish.yml/badge.svg)](https://github.com/heraque/debugTools/actions/workflows/publish.yml)
+
 Este repositório fornece duas ferramentas independentes para operações de SRE e troubleshooting em ambientes distribuídos e Kubernetes:
 
 1. **`debugtools`**: Uma imagem de debug clássica (shell-based, não-root) para uso em containers efêmeros (`kubectl debug`).
